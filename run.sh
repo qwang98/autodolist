@@ -9,6 +9,7 @@ MAX_ITERATIONS=${1:-100}
 EFFORT=${EFFORT:-max}
 MODEL=${MODEL:-}
 FALLBACK_MODEL=${FALLBACK_MODEL:-}
+BASE_BRANCH=${BASE_BRANCH:-main}
 RETRY_DELAY=60
 
 cd "$PROJECT_DIR"
@@ -35,7 +36,7 @@ run_step() {
       claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
         "${base_flags[@]}" >> "$log_file" 2>&1 || true
     else
-      claude -p "$(cat "$prompt_file")" --name "autodolist #$iteration: $step_name" \
+      claude -p "$(printf 'BASE_BRANCH=%s\n\n%s' "$BASE_BRANCH" "$(cat "$prompt_file")")" --name "autodolist #$iteration: $step_name" \
         "${base_flags[@]}" > "$log_file" 2>&1 || true
     fi
 

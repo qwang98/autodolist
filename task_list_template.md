@@ -43,6 +43,20 @@ vague outcomes. -->
 
 <!-- ... -->
 
+## Failed
+
+<!-- Phase 2 moves tasks here when pass criteria fail after max retries.
+Phase 3 moves tasks here when the merge to the base branch fails.
+Each entry keeps its full Task Description and Pass Criteria plus a
+failure note. Users can promote failed tasks back to numbered tasks
+to retry, or delete them. -->
+
+## Completed
+
+<!-- Phase 3 moves successfully merged tasks here (with their full
+Task Description and Pass Criteria intact) plus a completion note.
+This section is append-only. Do not edit or reorder entries. -->
+
 ## Proposed Tasks
 
 <!-- Phase 2 and Phase 3 agents append candidate tasks here as they discover

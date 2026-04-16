@@ -1,3 +1,7 @@
+# BASE_BRANCH
+
+The first line of this prompt specifies `BASE_BRANCH=<branch>`. This is the shared target branch (default: `main`). Every reference to "main" in this prompt means the BASE_BRANCH value. Use it in all git commands: `git fetch origin $BASE_BRANCH`, `git push origin HEAD:$BASE_BRANCH`, etc.
+
 # CRITICAL REQUIREMENTS
 
 You MUST complete ALL of the following before your session ends:
@@ -24,10 +28,11 @@ Read ALL of the following files before doing anything else:
 
 1. `autodolist/autodolist_context.md` — framework documentation, conventions, file formats
 2. `autodolist/context.md` — project-specific context (setup and constraints)
-3. `autodolist/task_list.md` — the ordered task list (you will append to its Proposed Tasks section in Step 8)
-4. `autodolist-results/current_task.md` — the just-completed task (contains the task name and pass criteria)
-5. `autodolist-results/<task_name>/report.md` — the Phase 2 execution report; its "Review Points" section is consulted in Step 5d
-6. `autodolist-results/log.md` — to confirm the task's Result value
+3. `autodolist/debug_pass_criteria.md` — debugging methodology consulted when pass criteria fail in Step 6
+4. `autodolist/task_list.md` — the ordered task list (you will append to its Proposed Tasks section in Step 8)
+5. `autodolist-results/current_task.md` — the just-completed task (contains the task name and pass criteria)
+6. `autodolist-results/<task_name>/report.md` — the Phase 2 execution report; its "Review Points" section is consulted in Step 5d
+7. `autodolist-results/log.md` — to confirm the task's Result value
 
 # Steps
 
@@ -50,14 +55,14 @@ Record the workspace branch name: `WORKSPACE_BRANCH=$(git rev-parse --abbrev-ref
 Run:
 
 ```
-git fetch origin main
+git fetch origin $BASE_BRANCH
 ```
 
 Compare the workspace branch to the just-fetched main:
 
-- `BASE=$(git merge-base HEAD origin/main)`
-- `BASE=$(git merge-base HEAD origin/main)`
-- If `BASE == origin/main` — main has not advanced. Skip Steps 4, 5, and 6 and go directly to Step 7 (fast-forward push).
+- `BASE=$(git merge-base HEAD origin/$BASE_BRANCH)`
+- `BASE=$(git merge-base HEAD origin/$BASE_BRANCH)`
+- If `BASE == origin/$BASE_BRANCH` — main has not advanced. Skip Steps 4, 5, and 6 and go directly to Step 7 (fast-forward push).
 - Otherwise main has advanced since this workspace branched off. Go to Step 4.
 
 ## Step 4: Merge
@@ -65,7 +70,7 @@ Compare the workspace branch to the just-fetched main:
 Merge main into the workspace branch:
 
 ```
-git merge --no-ff origin/main -m "Merge main into <task_name>"
+git merge --no-ff origin/$BASE_BRANCH -m "Merge main into <task_name>"
 ```
 
 Resolve any conflicts following the plan and original task intent. If conflicts cannot be resolved without re-designing the task, STOP: append `**Merge**: failed (unresolvable conflict)` to the task's log entry, `git merge --abort`, and end your session.
@@ -84,13 +89,13 @@ Both start empty.
 
 ### 5a: Produce the PR-style diff
 
-Write the diff from `origin/main`'s pre-merge tip to the current working tree:
+Write the diff from `origin/$BASE_BRANCH`'s pre-merge tip to the current working tree:
 
 ```
 git diff HEAD^2 > autodolist-results/<task_name>/diff.patch
 ```
 
-`HEAD^2` is the second parent of the `--no-ff` merge commit — i.e., `origin/main`'s tip at merge time. This diff includes the task's own changes, any conflict resolution, and any fixes from this loop, but excludes unrelated changes that `main` brought in. Using `HEAD^2` (not `HEAD^2..HEAD`) so the diff captures uncommitted fixes too.
+`HEAD^2` is the second parent of the `--no-ff` merge commit — i.e., `origin/$BASE_BRANCH`'s tip at merge time. This diff includes the task's own changes, any conflict resolution, and any fixes from this loop, but excludes unrelated changes that `main` brought in. Using `HEAD^2` (not `HEAD^2..HEAD`) so the diff captures uncommitted fixes too.
 
 ### 5b: Launch the review subagent
 
@@ -137,7 +142,7 @@ For every pass criterion listed in `autodolist-results/current_task.md`:
 If every criterion passes → EXIT the loop with result = **success**.
 
 If any criterion fails:
-1. Diagnose and fix the implementation. Do NOT commit — keep fixes as uncommitted changes.
+1. Consult `autodolist/debug_pass_criteria.md` for debugging methodology. Diagnose and fix the implementation. Do NOT commit — keep fixes as uncommitted changes.
 2. Increment the attempt counter and re-run every pass criterion.
 
 **Max 3 fix attempts.** If pass criteria still fail after the 3rd fix attempt, EXIT with result = **failure**.
@@ -165,7 +170,7 @@ Proceed to Step 7.
 Push the workspace branch tip to main. Use a fast-forward if possible; otherwise push the merge commit (and any post-merge fix commit) from Steps 4-6.
 
 ```
-git push origin HEAD:main
+git push origin HEAD:$BASE_BRANCH
 ```
 
 If the push is rejected because main moved again between Step 3 and now, return to Step 3 and repeat. Limit this retry loop to 3 attempts; on the 4th rejection, append `**Merge**: failed (push contention after 3 retries)` and end your session.
@@ -178,7 +183,7 @@ Append to the task's log entry in `autodolist-results/log.md`:
 **Merge**: success — pushed <commit-sha> to main
 ```
 
-If Steps 4-6 ran, note it: `**Merge**: success — merged main, impl review loop + pass criteria re-verified, pushed <sha> to main`.
+If Steps 4-6 ran, note it: `**Merge**: success — merged $BASE_BRANCH, impl review loop + pass criteria re-verified, pushed <sha> to $BASE_BRANCH`.
 
 ## Step 8: Propose New Tasks
 
@@ -207,6 +212,26 @@ Do NOT number Proposed entries (the user will promote and number them manually i
 
 Proposing nothing is fine.
 
+## Step 9: Update Task List Status
+
+Update `autodolist/task_list.md` based on the final outcome of this phase:
+
+### If the merge failed (pass criteria broke, impl review blockers, unresolvable conflict, or push contention):
+
+1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after the numbered tasks but before `## Completed`).
+2. Cut the entire task block — from its `## Task N: <short name>` heading through all its subsections (`### Task Description`, `### Pass Criteria`) — out of its current position.
+3. Append it to the bottom of the `## Failed` section.
+4. Under the moved task block, add a one-line note: `Failed at merge: <task_name> — <date> — <short reason>`.
+
+### If the merge succeeded (pushed to $BASE_BRANCH):
+
+1. Find the `## Completed` section in `task_list.md` (create it if it does not exist — place it after `## Failed` but before `## Proposed Tasks`).
+2. Cut the entire task block out of its current position.
+3. Append it to the bottom of the `## Completed` section.
+4. Under the moved task block, add a one-line note: `Completed: <task_name> — <date> — pushed <commit-sha> to $BASE_BRANCH`.
+
+Do NOT modify the task's content when moving it.
+
 ---
 
 # REMINDER — VERIFY BEFORE ENDING SESSION
@@ -217,8 +242,8 @@ Go through this checklist. Do NOT end your session until every box is checked:
 - [ ] Read autodolist/context.md and autodolist-results/current_task.md
 - [ ] Confirmed the just-completed task has Result: success in log.md
 - [ ] Confirmed the working tree is clean
-- [ ] Confirmed the current branch is not `main`
-- [ ] Fetched origin/main
+- [ ] Confirmed the current branch is not `$BASE_BRANCH`
+- [ ] Fetched origin/$BASE_BRANCH
 - [ ] If main advanced: merged, then ran impl review loop (with cross-reference against Phase 2's Review Points) until satisfied or impasse
 - [ ] If main advanced: ran pass criteria retry loop (max 3 fix attempts) after impl review
 - [ ] If main advanced: all fixes stayed uncommitted until both gates passed; then committed (or reset --hard ORIG_HEAD on failure)
@@ -226,3 +251,5 @@ Go through this checklist. Do NOT end your session until every box is checked:
 - [ ] Appended a `**Merge**:` line to the task's entry in autodolist-results/log.md
 - [ ] autodolist-results/ is NOT committed or staged
 - [ ] Proposed new tasks (if any) appended to task_list.md's Proposed Tasks section, no duplicates
+- [ ] If merge failed: task block moved to task_list.md's Failed section with failure note
+- [ ] If merge succeeded: task block moved to task_list.md's Completed section with completion note

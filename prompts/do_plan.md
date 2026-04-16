@@ -25,9 +25,10 @@ Read ALL of the following files before doing anything else:
 1. `autodolist/autodolist_context.md` — framework documentation, conventions, file formats
 2. `autodolist/context.md` — project-specific context (setup and constraints)
 3. `autodolist/review_impl_guideline.md` — the impl review standard (used by the review subagent in Step 2)
-4. `autodolist/task_list.md` — the ordered task list (you will append to its Proposed Tasks section in Step 8)
-5. `autodolist-results/current_task.md` — the current task (contains the task name, description, pass criteria)
-6. Extract the task name, then read `autodolist-results/<task_name>/plan.md` — the approved implementation plan
+4. `autodolist/debug_pass_criteria.md` — debugging methodology consulted when pass criteria fail in Step 3
+5. `autodolist/task_list.md` — the ordered task list (you will append to its Proposed Tasks section in Step 8)
+6. `autodolist-results/current_task.md` — the current task (contains the task name, description, pass criteria)
+7. Extract the task name, then read `autodolist-results/<task_name>/plan.md` — the approved implementation plan
 
 # Steps
 
@@ -113,7 +114,7 @@ For every pass criterion listed in `autodolist-results/current_task.md`:
 If every criterion passes on the current attempt → EXIT the loop with result = **success**.
 
 If any criterion fails:
-1. Diagnose and fix the implementation.
+1. Consult `autodolist/debug_pass_criteria.md` for debugging methodology. Diagnose and fix the implementation.
 2. Commit the fix: `git add -A && git commit -m "<task_name>: pass criteria fix attempt <N>"`.
 3. Increment the attempt counter and re-run every pass criterion.
 
@@ -219,6 +220,23 @@ Do NOT number Proposed entries (the user will promote and number them manually i
 
 If you have no new tasks to propose, leave the section alone and move on. Proposing nothing is fine.
 
+## Step 9: Update Task List Status
+
+Update `autodolist/task_list.md` based on the final outcome of this phase:
+
+### If the task failed (pass criteria not met after max retries):
+
+1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after the numbered tasks but before `## Completed`).
+2. Cut the entire task block — from its `## Task N: <short name>` heading through all its subsections (`### Task Description`, `### Pass Criteria`) — out of its current position.
+3. Append it to the bottom of the `## Failed` section.
+4. Under the moved task block, add a one-line note: `Failed: <task_name> — <date> — <short reason>`.
+
+### If the task succeeded (pass criteria met):
+
+Do nothing. The task stays in its current position. Phase 3 (Merge to Main) will move it to `## Completed` after a successful push, or to `## Failed` if the merge fails.
+
+Do NOT modify the task's content when moving it.
+
 ---
 
 # REMINDER — VERIFY BEFORE ENDING SESSION
@@ -238,3 +256,5 @@ Go through this checklist. Do NOT end your session until every box is checked:
 - [ ] If the task failed: committed then reverted
 - [ ] Created tag `autodolist/<task_name>` on the last commit
 - [ ] Proposed new tasks (if any) appended to task_list.md's Proposed Tasks section, no duplicates
+- [ ] If the task failed: task block moved to task_list.md's Failed section with failure note
+- [ ] If the task succeeded: task block left in place (Phase 3 handles final placement)
