@@ -11,6 +11,7 @@ MODEL=${MODEL:-}
 FALLBACK_MODEL=${FALLBACK_MODEL:-}
 BASE_BRANCH=${BASE_BRANCH:-main}
 RETRY_DELAY=60
+PHASE_TIMEOUT=${PHASE_TIMEOUT:-3600}  # Wall-clock timeout per phase (seconds)
 
 cd "$PROJECT_DIR"
 mkdir -p autodolist-results/logs
@@ -18,6 +19,19 @@ mkdir -p autodolist-results/logs
 # Log bash script output
 RUN_LOG="autodolist-results/logs/run.log"
 exec > >(tee -a "$RUN_LOG") 2>&1
+
+cleanup_children() {
+  local pid="$1"
+  # Kill any orphaned child processes (background bash/sleep from agent sessions)
+  local children
+  children=$(pgrep -P "$pid" 2>/dev/null || true)
+  if [[ -n "$children" ]]; then
+    echo "[$(date)] Cleaning up orphaned child processes of PID $pid"
+    kill $children 2>/dev/null || true
+    sleep 1
+    kill -9 $children 2>/dev/null || true
+  fi
+}
 
 run_step() {
   local prompt_file="$1" step_name="$2" iteration="$3" log_name="$4"
@@ -31,14 +45,20 @@ run_step() {
   while true; do
     echo "[$(date)] $step_name → $log_file"
 
+    local claude_pid=""
     if [[ -n "$session_id" ]]; then
       # Resume the rate-limited session
-      claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
-        "${base_flags[@]}" >> "$log_file" 2>&1 || true
+      timeout "$PHASE_TIMEOUT" claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
+        "${base_flags[@]}" >> "$log_file" 2>&1 &
     else
-      claude -p "$(printf 'BASE_BRANCH=%s\n\n%s' "$BASE_BRANCH" "$(cat "$prompt_file")")" --name "autodolist #$iteration: $step_name" \
-        "${base_flags[@]}" > "$log_file" 2>&1 || true
+      timeout "$PHASE_TIMEOUT" claude -p "$(printf 'BASE_BRANCH=%s\n\n%s' "$BASE_BRANCH" "$(cat "$prompt_file")")" --name "autodolist #$iteration: $step_name" \
+        "${base_flags[@]}" > "$log_file" 2>&1 &
     fi
+    claude_pid=$!
+    wait "$claude_pid" || true
+
+    # Clean up any orphaned child processes (background bash/sleep loops)
+    cleanup_children "$claude_pid"
 
     # Check for rate limit rejection
     local last_result

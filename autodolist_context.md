@@ -60,7 +60,11 @@ Created and updated during runs:
 
 Agents and scripts in this repo assume this layout. A task without both subsections cannot be processed.
 
-Additionally, `task_list.md` has a **Proposed Tasks** section at the bottom. Phase 2 and Phase 3 agents append candidate tasks here when they surface follow-up work during implementation or merging. Each proposal uses the same `### Proposed: <short name>` / `#### Task Description` / `#### Pass Criteria` structure. Agents check existing entries (numbered tasks AND other proposals) before appending, to avoid duplicates. Users promote proposals to numbered tasks manually (or delete them).
+The file has four sections after the numbered tasks, in this order: `## Proposed Tasks` → `## Failed` → `## Completed`. Agents stop scanning for eligible tasks when they reach `## Proposed Tasks`.
+
+- **Proposed Tasks**: Phase 2 and Phase 3 agents append candidate tasks here when they surface follow-up work during implementation or merging. Each proposal uses the same `### Proposed: <short name>` / `#### Task Description` / `#### Pass Criteria` structure. Agents check existing entries (numbered tasks AND other proposals) before appending, to avoid duplicates. Users promote proposals to numbered tasks manually (or delete them).
+- **Failed**: Tasks moved here after max retries or merge failure. Users can promote back to numbered tasks.
+- **Completed**: Tasks moved here after successful merge. Append-only.
 
 ### Task Naming
 

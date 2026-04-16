@@ -9,7 +9,10 @@ unchanged.
 
 Each numbered task MUST follow this structure exactly — agents and scripts in
 this repo assume every task has a `### Task Description` subsection and a
-`### Pass Criteria` subsection. -->
+`### Pass Criteria` subsection.
+
+Section order: Pending tasks → Proposed Tasks → Failed → Completed.
+Agents stop scanning for eligible tasks when they reach Proposed Tasks. -->
 
 ## Task 1: <short name>
 
@@ -43,6 +46,19 @@ vague outcomes. -->
 
 <!-- ... -->
 
+## Proposed Tasks
+
+<!-- Phase 2 and Phase 3 agents append candidate tasks here as they discover
+follow-up work during implementation and merging. Each entry uses the same
+Task Description + Pass Criteria structure as a numbered task, but without
+a number — these are suggestions the user can choose to promote (and number)
+or delete.
+
+Agents check existing entries in this section AND the numbered tasks above
+before appending, to avoid duplicates. Users should not modify existing
+entries — either promote an entry to a numbered task (moving it up and
+giving it a number) or delete it. -->
+
 ## Failed
 
 <!-- Phase 2 moves tasks here when pass criteria fail after max retries.
@@ -56,16 +72,3 @@ to retry, or delete them. -->
 <!-- Phase 3 moves successfully merged tasks here (with their full
 Task Description and Pass Criteria intact) plus a completion note.
 This section is append-only. Do not edit or reorder entries. -->
-
-## Proposed Tasks
-
-<!-- Phase 2 and Phase 3 agents append candidate tasks here as they discover
-follow-up work during implementation and merging. Each entry uses the same
-Task Description + Pass Criteria structure as a numbered task, but without
-a number — these are suggestions the user can choose to promote (and number)
-or delete.
-
-Agents check existing entries in this section AND the numbered tasks above
-before appending, to avoid duplicates. Users should not modify existing
-entries — either promote an entry to a numbered task (moving it up and
-giving it a number) or delete it. -->

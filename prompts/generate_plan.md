@@ -41,7 +41,7 @@ Do NOT attempt tasks from the `## Proposed Tasks`, `## Failed`, or `## Completed
 
 Determine the next task to attempt as follows:
 
-1. Starting from Task 1, walk the numbered tasks in order (stop when you reach `## Failed`, `## Completed`, or `## Proposed Tasks`).
+1. Starting from Task 1, walk the numbered tasks in order (stop when you reach `## Proposed Tasks`, `## Failed`, or `## Completed`).
 2. For each task, consult `autodolist-results/log.md` to check whether it has already been completed successfully (a log entry with `**Result**: success` for that task).
 3. The first task without a successful entry is the one to attempt.
 4. If an earlier task has only failed attempts recorded, re-attempt it — a failed attempt is a record, not a resolution. Use the accumulated failure reports to inform a different angle.
