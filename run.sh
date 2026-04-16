@@ -20,19 +20,6 @@ mkdir -p autodolist-results/logs
 RUN_LOG="autodolist-results/logs/run.log"
 exec > >(tee -a "$RUN_LOG") 2>&1
 
-cleanup_children() {
-  local pid="$1"
-  # Kill any orphaned child processes (background bash/sleep from agent sessions)
-  local children
-  children=$(pgrep -P "$pid" 2>/dev/null || true)
-  if [[ -n "$children" ]]; then
-    echo "[$(date)] Cleaning up orphaned child processes of PID $pid"
-    kill $children 2>/dev/null || true
-    sleep 1
-    kill -9 $children 2>/dev/null || true
-  fi
-}
-
 run_step() {
   local prompt_file="$1" step_name="$2" iteration="$3" log_name="$4"
   local log_file="autodolist-results/logs/${log_name}.log"
@@ -45,20 +32,25 @@ run_step() {
   while true; do
     echo "[$(date)] $step_name → $log_file"
 
-    local claude_pid=""
     if [[ -n "$session_id" ]]; then
       # Resume the rate-limited session
-      timeout "$PHASE_TIMEOUT" claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
-        "${base_flags[@]}" >> "$log_file" 2>&1 &
+      timeout --kill-after=30 "$PHASE_TIMEOUT" claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
+        "${base_flags[@]}" >> "$log_file" 2>&1 || true
     else
-      timeout "$PHASE_TIMEOUT" claude -p "$(printf 'BASE_BRANCH=%s\n\n%s' "$BASE_BRANCH" "$(cat "$prompt_file")")" --name "autodolist #$iteration: $step_name" \
-        "${base_flags[@]}" > "$log_file" 2>&1 &
+      timeout --kill-after=30 "$PHASE_TIMEOUT" claude -p "$(printf 'BASE_BRANCH=%s\n\n%s' "$BASE_BRANCH" "$(cat "$prompt_file")")" --name "autodolist #$iteration: $step_name" \
+        "${base_flags[@]}" > "$log_file" 2>&1 || true
     fi
-    claude_pid=$!
-    wait "$claude_pid" || true
 
-    # Clean up any orphaned child processes (background bash/sleep loops)
-    cleanup_children "$claude_pid"
+    # Clean up any orphaned child processes left by the claude session
+    # Find any bash/sleep processes that were children of the now-exited claude
+    local orphans
+    orphans=$(pgrep -f "until.*sleep|sleep.*autodolist" 2>/dev/null || true)
+    if [[ -n "$orphans" ]]; then
+      echo "[$(date)] Cleaning up orphaned processes"
+      kill $orphans 2>/dev/null || true
+      sleep 1
+      kill -9 $orphans 2>/dev/null || true
+    fi
 
     # Check for rate limit rejection
     local last_result
