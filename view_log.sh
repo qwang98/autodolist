@@ -1,6 +1,6 @@
 #!/bin/bash
-# Usage: bash autoopt/view_log.sh [-v] <file.log>
-# Or:   tail -f <file.log> | bash autoopt/view_log.sh [-v]
+# Usage: bash autodolist/view_log.sh [-v] <file.log>
+# Or:   tail -f <file.log> | bash autodolist/view_log.sh [-v]
 #
 # Converts stream-json output into readable text.
 # Default: agent messages only. -v: include tool calls and results.

@@ -3,27 +3,27 @@
 You MUST complete ALL of the following before your session ends:
 
 1. You MUST read all context files listed in the Inputs section
-2. You MUST create baseline measurements in autoopt-results/baseline/ if they don't exist yet
-3. You MUST measure current performance and profile the system
-4. You MUST write autoopt-results/task.md with a complete task description
-5. You MUST write autoopt-results/<task_name>/plan.md with a detailed implementation plan
-6. You MUST have the plan reviewed by a subagent and iterate until approved
-7. You MUST NOT modify any source code — this is analysis and planning only
+2. You MUST identify the next task to attempt from `autodolist/task_list.md`
+3. You MUST write `autodolist-results/current_task.md` with the task description AND pass criteria copied verbatim from `autodolist/task_list.md`
+4. You MUST write `autodolist-results/<task_name>/plan.md` with a detailed implementation plan
+5. You MUST have the plan reviewed by a subagent and iterate until approved
+6. You MUST NOT modify any source code — this is analysis and planning only
 
 ---
 
 # Role
 
-You are an automated optimization agent in the **Generate & Plan** phase. Your job is to analyze the current state of the system, select the most promising optimization, and produce a reviewed implementation plan.
+You are an automated agent in the **Generate & Plan** phase of AutoDolist. Your job is to pick the next task from the user-defined task list and produce a reviewed implementation plan that will satisfy that task's pass criteria.
 
 # Inputs — Read These Files First
 
 Read ALL of the following files before doing anything else:
 
-1. `autoopt/autoopt_context.md` — framework documentation, conventions, file formats
-2. `autoopt/context.md` — project-specific context: setup, goals, how to measure and profile
-3. `autoopt-results/log.md` — if it exists, the full history of all previous optimizations
-4. All files matching `autoopt-results/*/report.md` — detailed reports from previous tasks
+1. `autodolist/autodolist_context.md` — framework documentation, conventions, file formats
+2. `autodolist/context.md` — project-specific context: setup and constraints
+3. `autodolist/task_list.md` — the ordered list of tasks to attempt
+4. `autodolist-results/log.md` — if it exists, the full history of all previous task attempts
+5. All files matching `autodolist-results/*/report.md` — detailed reports from previous attempts
 
 If log.md or reports don't exist yet, this is the first iteration.
 
@@ -31,33 +31,29 @@ If log.md or reports don't exist yet, this is the first iteration.
 
 ## Step 0: Setup (if needed)
 
-On the very first run, you *might* have to follow the setup instructions in `autoopt/context.md`. Check whether it has been completed and if not, complete it now.
+On the very first run, you *might* have to follow the setup instructions in `autodolist/context.md`. Check whether it has been completed and if not, complete it now.
 
-## Step 1: Baseline
+## Step 1: Select the Next Task
 
-Check if `autoopt-results/baseline/` exists and contains result files.
+`autodolist/task_list.md` defines tasks in order. Each task is an `## Task N: <short name>` section with a `### Task Description` subsection and a `### Pass Criteria` subsection.
 
-If it does NOT exist:
-- Follow the measurement instructions in `autoopt/context.md`
-- Run the full measurement suite
-- Save ALL result files to `autoopt-results/baseline/`
-- This baseline is the permanent reference point for all future optimizations
+Determine the next task to attempt as follows:
 
-If it already exists, skip this step.
+1. Starting from Task 1, walk the list in order.
+2. For each task, consult `autodolist-results/log.md` to check whether it has already been completed successfully (a log entry with `**Result**: success` for that task).
+3. The first task without a successful entry is the one to attempt.
+4. If an earlier task has only failed attempts recorded, re-attempt it — a failed attempt is a record, not a resolution. Use the accumulated failure reports to inform a different angle.
+5. If every task in the list already has a successful entry, write `autodolist-results/current_task.md` with the single line `All tasks complete.` and end your session.
 
-## Step 2: Measure Current Performance
+## Step 2: Confirm Current Tip
 
-Run the measurement commands described in `autoopt/context.md` to capture the system's current state. This may differ from baseline if previous optimizations were applied.
+Run `git rev-parse HEAD` and `git status --short`. The current branch tip is the base your plan will build on. It should correspond to the last successfully completed task (or the starting point of the branch if this is the first task).
 
-**If any measurement command fails or produces empty results, STOP.** Do not proceed to profiling or task generation. Instead, write `autoopt-results/task.md` with the task being to fix the broken measurement infrastructure — describe what command failed, what error occurred, and any diagnosis of the root cause. The optimization loop cannot make progress without working measurements.
+If the working tree is dirty with uncommitted changes, STOP. Write `autodolist-results/current_task.md` describing the inconsistent state and end your session — the previous iteration did not clean up correctly and the loop cannot safely continue.
 
-## Step 3: Profile
+## Step 3: Research
 
-Run the profiling tools described in `autoopt/context.md`. Identify where time is being spent. Focus on the metric(s) described in the problem description.
-
-## Step 4: Research
-
-Read the relevant source code to understand the root causes of the bottlenecks you identified. Follow call chains, understand data flow, identify where time is spent and why.
+Read the relevant source code to understand what the task requires. Follow call chains, understand data flow, identify the files and functions that will need to change.
 
 Go deep — trace the full code path that would need to change:
 - Entry points and callers
@@ -65,73 +61,67 @@ Go deep — trace the full code path that would need to change:
 - Any FFI or system boundaries
 - Data structures and their layouts
 
-This understanding serves both idea generation and plan design. Do it once, do it thoroughly.
+Also read the exact pass criteria. If a pass criterion is a test command, locate the test file; if it is an expected output, identify where it is produced.
 
-## Step 5: Generate Ideas
+## Step 4: Write Task File
 
-Generate 3-5 concrete optimization ideas. For each, estimate:
-
-- **Expected impact**: How much improvement, with units or percentages
-- **Probability of success**: High / Medium / Low, with reasoning
-- **Complexity**: Simple / Moderate / Complex
-
-Consider what has already been tried (from log.md and reports). Do NOT repeat failed approaches unless you have a substantially different angle. Look for ideas that compound with previous successful optimizations.
-
-## Step 6: Select Best Idea and Write Task
-
-Rank ideas by (expected impact x probability of success / complexity). Select the top one.
-
-Write `autoopt-results/task.md` with this structure:
+Write `autodolist-results/current_task.md` with this structure:
 
 ```
-# <task name>
+# <task_name>
 
-<1-3 sentences describing the optimization idea and why it is expected to help.>
+## Task Description
+
+<copied verbatim from task_list.md>
+
+## Pass Criteria
+
+<copied verbatim from task_list.md>
 ```
 
-Use the current date and time for the task name. Example: `2026-04-10-1430-parallelize-kernel-launches`
+Derive `<task_name>` as `YYYY-MM-DD-HHMM-<kebab-case-task-name>`, using the current date/time and the short name of the task from task_list.md. Example: `2026-04-15-1430-add-user-login`.
 
-## Step 7: Create Task Directory and Write Plan
+## Step 5: Create Task Directory and Write Plan
 
-Create the directory `autoopt-results/<task_name>/`.
+Create the directory `autodolist-results/<task_name>/`.
 
-Write a detailed implementation plan to `autoopt-results/<task_name>/plan.md` with these sections:
+Write a detailed implementation plan to `autodolist-results/<task_name>/plan.md` with these sections:
 
 ### Goal
-What this optimization achieves. Reference the task description.
+What this task accomplishes. Reference the task description and pass criteria.
 
 ### Current Code Path
-The call chain and code flow being modified. Include file paths and line numbers. Describe what the code currently does and why it's slow.
+The call chain and code flow being modified. Include file paths and line numbers. Describe what the code currently does.
 
 ### Changes
 Step-by-step list of code changes. For each change:
 - File path
 - What specifically to change (function, struct, logic)
-- Why this change contributes to the optimization
+- Why this change contributes to satisfying the task
 
 ### Invariants
 What must remain true after the changes. Correctness properties that must be preserved.
 
-### Measurement Plan
-How to verify the optimization works. Exact commands and expected behavior.
+### Pass Criteria Verification
+For each pass criterion in the task, describe the exact command or check used to verify it. This is the recipe the Execute phase will run.
 
 ### Rollback Criteria
-Under what conditions should we give up and revert. Be specific (e.g., "less than 5% improvement after full implementation").
+Under what conditions should we give up and record this as a failed attempt. Be specific (e.g., "pass criterion X still fails after following the plan end-to-end").
 
-## Step 8: Review Loop
+## Step 6: Review Loop
 
 Launch a **subagent** to review the plan. The subagent should be instructed to read:
-- `autoopt/review_guideline.md` (the review standard to follow)
-- `autoopt/context.md` (project context)
-- `autoopt-results/task.md` (the task being planned)
-- `autoopt-results/<task_name>/plan.md` (the plan to review)
+- `autodolist/review_plan_guideline.md` (the review standard to follow)
+- `autodolist/context.md` (project context)
+- `autodolist-results/current_task.md` (the task being planned)
+- `autodolist-results/<task_name>/plan.md` (the plan to review)
 
 Tell the subagent: "Review this plan following the review guideline. Return your response in the format: Findings, Improvements, Assessment."
 
 After receiving the review:
 
 1. Address ALL findings that are design-level blockers
-2. Update `autoopt-results/<task_name>/plan.md`
+2. Update `autodolist-results/<task_name>/plan.md`
 3. Re-launch the reviewer subagent with the updated plan content
 4. Repeat until the reviewer's Assessment states:
    - No remaining design-level blockers
@@ -139,9 +129,9 @@ After receiving the review:
 
 You MUST iterate at least once. Do NOT skip the review.
 
-## Step 9: Finalize
+## Step 7: Finalize
 
-Ensure the final approved plan is saved to `autoopt-results/<task_name>/plan.md`.
+Ensure the final approved plan is saved to `autodolist-results/<task_name>/plan.md`.
 
 ---
 
@@ -149,15 +139,14 @@ Ensure the final approved plan is saved to `autoopt-results/<task_name>/plan.md`
 
 Go through this checklist. Do NOT end your session until every box is checked:
 
-- [ ] Read autoopt/autoopt_context.md
-- [ ] Read autoopt/context.md
+- [ ] Read autodolist/autodolist_context.md
+- [ ] Read autodolist/context.md (project setup and constraints)
+- [ ] Read autodolist/task_list.md
 - [ ] Read log.md and all previous reports (or confirmed they don't exist yet)
-- [ ] Baseline exists in autoopt-results/baseline/ (created it if it was missing)
-- [ ] Measured current performance
-- [ ] Profiled the system
-- [ ] Generated and ranked multiple ideas
-- [ ] Wrote autoopt-results/task.md with all required sections filled in
-- [ ] autoopt-results/<task_name>/plan.md exists with all required sections
+- [ ] Selected the next task per Step 1 and recorded it in autodolist-results/current_task.md
+- [ ] Working tree is clean; current branch tip confirmed
+- [ ] Copied the task's Task Description and Pass Criteria verbatim into current_task.md
+- [ ] autodolist-results/<task_name>/plan.md exists with all required sections
 - [ ] Plan was reviewed by a subagent at least once
 - [ ] All design-level blockers from review were resolved
 - [ ] Final review assessment says "prototype-ready" with no design-level blockers

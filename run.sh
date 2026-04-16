@@ -12,15 +12,15 @@ FALLBACK_MODEL=${FALLBACK_MODEL:-}
 RETRY_DELAY=60
 
 cd "$PROJECT_DIR"
-mkdir -p autoopt-results/logs
+mkdir -p autodolist-results/logs
 
 # Log bash script output
-RUN_LOG="autoopt-results/logs/run.log"
+RUN_LOG="autodolist-results/logs/run.log"
 exec > >(tee -a "$RUN_LOG") 2>&1
 
 run_step() {
   local prompt_file="$1" step_name="$2" iteration="$3" log_name="$4"
-  local log_file="autoopt-results/logs/${log_name}.log"
+  local log_file="autodolist-results/logs/${log_name}.log"
   local session_id=""
 
   local base_flags=(--dangerously-skip-permissions --effort "$EFFORT" --output-format stream-json --verbose)
@@ -35,7 +35,7 @@ run_step() {
       claude --resume "$session_id" -p "Continue. You were interrupted by a rate limit." \
         "${base_flags[@]}" >> "$log_file" 2>&1 || true
     else
-      claude -p "$(cat "$prompt_file")" --name "autoopt #$iteration: $step_name" \
+      claude -p "$(cat "$prompt_file")" --name "autodolist #$iteration: $step_name" \
         "${base_flags[@]}" > "$log_file" 2>&1 || true
     fi
 
@@ -75,11 +75,18 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "========================================"
   run_step "$SCRIPT_DIR/prompts/generate_plan.md" "Generate & Plan" "$i" "${TIMESTAMP}-${i}-1-plan"
 
-  if [[ -f autoopt-results/task.md ]]; then
+  if [[ -f autodolist-results/current_task.md ]]; then
     echo "----------------------------------------"
-    cat autoopt-results/task.md
+    cat autodolist-results/current_task.md
     echo "----------------------------------------"
   fi
 
-  run_step "$SCRIPT_DIR/prompts/do_task.md"        "Do Task"        "$i" "${TIMESTAMP}-${i}-2-do"
+  # Stop cleanly once the Generate phase reports the task list is exhausted.
+  if [[ -f autodolist-results/current_task.md ]] && grep -q '^All tasks complete\.$' autodolist-results/current_task.md; then
+    echo "[$(date)] All tasks complete. Exiting."
+    break
+  fi
+
+  run_step "$SCRIPT_DIR/prompts/do_plan.md"        "Do Plan"        "$i" "${TIMESTAMP}-${i}-2-do"
+  run_step "$SCRIPT_DIR/prompts/merge_main.md"     "Merge Main"     "$i" "${TIMESTAMP}-${i}-3-merge"
 done
