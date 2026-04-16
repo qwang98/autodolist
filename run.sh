@@ -41,17 +41,6 @@ run_step() {
         "${base_flags[@]}" > "$log_file" 2>&1 || true
     fi
 
-    # Clean up any orphaned child processes left by the claude session
-    # Find any bash/sleep processes that were children of the now-exited claude
-    local orphans
-    orphans=$(pgrep -f "until.*sleep|sleep.*autodolist" 2>/dev/null || true)
-    if [[ -n "$orphans" ]]; then
-      echo "[$(date)] Cleaning up orphaned processes"
-      kill $orphans 2>/dev/null || true
-      sleep 1
-      kill -9 $orphans 2>/dev/null || true
-    fi
-
     # Check for rate limit rejection
     local last_result
     last_result=$(grep '"type":"result"' "$log_file" | tail -1)
