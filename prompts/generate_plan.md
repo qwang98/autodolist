@@ -35,15 +35,17 @@ On the very first run, you *might* have to follow the setup instructions in `aut
 
 ## Step 1: Select the Next Task
 
-`autodolist/task_list.md` defines tasks in order. Each task is an `## Task N: <short name>` section with a `### Task Description` subsection and a `### Pass Criteria` subsection.
+`autodolist/task_list.md` defines tasks in order. Only **numbered tasks** — headings matching `## Task N: <short name>` — are eligible for selection. Each has a `### Task Description` subsection and a `### Pass Criteria` subsection.
+
+Do NOT attempt tasks from the `## Proposed Tasks`, `## Failed`, or `## Completed` sections. Proposed tasks require manual promotion by the user (renaming to `## Task N: ...` and moving above those sections) before they become eligible.
 
 Determine the next task to attempt as follows:
 
-1. Starting from Task 1, walk the list in order.
+1. Starting from Task 1, walk the numbered tasks in order (stop when you reach `## Failed`, `## Completed`, or `## Proposed Tasks`).
 2. For each task, consult `autodolist-results/log.md` to check whether it has already been completed successfully (a log entry with `**Result**: success` for that task).
 3. The first task without a successful entry is the one to attempt.
 4. If an earlier task has only failed attempts recorded, re-attempt it — a failed attempt is a record, not a resolution. Use the accumulated failure reports to inform a different angle.
-5. If every task in the list already has a successful entry, write `autodolist-results/current_task.md` with the single line `All tasks complete.` and end your session.
+5. If every numbered task already has a successful entry, write `autodolist-results/current_task.md` with the single line `All tasks complete.` and end your session.
 
 ## Step 2: Confirm Current Tip
 
