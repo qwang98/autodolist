@@ -220,12 +220,15 @@ On your last commit, create a tag `autodolist/<task_name>`.
 
 ## Step 8: Propose New Tasks
 
-Review `autodolist/task_list.md`'s **Proposed Tasks** section (create the section at the bottom of the file if it does not exist).
-
 For each follow-up idea you surfaced during implementation (see your report's Future Work section):
 
 1. Compare it against the existing Proposed Tasks entries AND the existing numbered tasks. If a substantively equivalent task already exists, SKIP it — do not duplicate.
-2. Otherwise, append a new entry to the Proposed Tasks section with the same structure as a numbered task:
+2. Determine if the new task is a **prerequisite** for a later numbered task — i.e., a later task's pass criteria cannot pass without this work being done first.
+3. Based on that determination:
+
+**If prerequisite:** Insert it as a new **numbered task** immediately before the task it unblocks. Use the heading format `## Task N: <short name>` with `### Task Description` and `### Pass Criteria` subsections. Renumber all subsequent tasks (increment their `## Task N:` headings by 1). This ensures the dependency is resolved before the blocked task is attempted.
+
+**If not prerequisite** (nice-to-have, optimization, future work): Append to the `## Proposed Tasks` section with the usual format:
 
 ```
 ### Proposed: <short name>
@@ -239,9 +242,7 @@ For each follow-up idea you surfaced during implementation (see your report's Fu
 <how success would be verified — concrete commands or expected outputs>
 ```
 
-Do NOT number Proposed entries (the user will promote and number them manually if they want to act on them).
-
-If you have no new tasks to propose, leave the section alone and move on. Proposing nothing is fine.
+If you have no new tasks to propose, leave the task list alone and move on. Proposing nothing is fine.
 
 ## Step 9: Update Task List Status
 

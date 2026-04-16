@@ -204,14 +204,17 @@ If Steps 4-6 ran, note it: `**Merge**: success — merged $BASE_BRANCH, impl rev
 
 ## Step 8: Propose New Tasks
 
-Review `autodolist/task_list.md`'s **Proposed Tasks** section (create the section at the bottom of the file if it does not exist).
-
 For each follow-up idea you surfaced while reconciling with `main` — e.g., a cross-cutting refactor the merge revealed, a test the re-verification showed is missing, a piece of the plan that should be its own task — consider proposing it.
 
 For each candidate:
 
 1. Compare against existing Proposed Tasks entries AND existing numbered tasks. If a substantively equivalent task already exists, SKIP it — do not duplicate.
-2. Otherwise, append a new entry with the same structure as a numbered task:
+2. Determine if the new task is a **prerequisite** for a later numbered task — i.e., a later task's pass criteria cannot pass without this work being done first.
+3. Based on that determination:
+
+**If prerequisite:** Insert it as a new **numbered task** immediately before the task it unblocks. Use the heading format `## Task N: <short name>` with `### Task Description` and `### Pass Criteria` subsections. Renumber all subsequent tasks (increment their `## Task N:` headings by 1).
+
+**If not prerequisite** (nice-to-have, optimization, future work): Append to the `## Proposed Tasks` section with the usual format:
 
 ```
 ### Proposed: <short name>
@@ -224,8 +227,6 @@ For each candidate:
 
 <how success would be verified — concrete commands or expected outputs>
 ```
-
-Do NOT number Proposed entries (the user will promote and number them manually if they want to act on them).
 
 Proposing nothing is fine.
 

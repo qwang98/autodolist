@@ -62,7 +62,9 @@ Agents and scripts in this repo assume this layout. A task without both subsecti
 
 The file has four sections after the numbered tasks, in this order: `## Proposed Tasks` → `## Failed` → `## Completed`. Agents stop scanning for eligible tasks when they reach `## Proposed Tasks`.
 
-- **Proposed Tasks**: Phase 2 and Phase 3 agents append candidate tasks here when they surface follow-up work during implementation or merging. Each proposal uses the same `### Proposed: <short name>` / `#### Task Description` / `#### Pass Criteria` structure. Agents check existing entries (numbered tasks AND other proposals) before appending, to avoid duplicates. Users promote proposals to numbered tasks manually (or delete them).
+- **Proposed Tasks**: Non-prerequisite follow-up work (nice-to-have, optimizations). Each uses `### Proposed: <short name>` / `#### Task Description` / `#### Pass Criteria`. Agents check for duplicates before appending. Users promote proposals to numbered tasks manually (or delete them).
+
+**Prerequisite insertion**: When agents discover a follow-up task that is a **prerequisite** for a later numbered task (its pass criteria can't pass without the new work), they insert it as a new numbered task immediately before the blocked task and renumber subsequent tasks. Non-prerequisite follow-up goes to Proposed Tasks as usual.
 - **Failed**: Tasks moved here after max retries or merge failure. Users can promote back to numbered tasks.
 - **Completed**: Tasks moved here after successful merge. Append-only.
 
