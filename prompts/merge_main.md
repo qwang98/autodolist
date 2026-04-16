@@ -157,10 +157,27 @@ Reset the workspace branch to before the merge: `git reset --hard ORIG_HEAD`. Do
 
 ### On success:
 
-Stage and commit all uncommitted changes (impl review fixes + pass criteria fixes) on top of the merge commit:
+If there are uncommitted changes (impl review fixes + pass criteria fixes), stage and commit on top of the merge commit. Follow these commit conventions:
+
+**Commit message format:**
+- Type prefix: `feat` / `fix` / `refactor` / `chore` / `docs` / `perf`
+- Short subject line (< 72 chars), imperative mood
+- Body listing key changes grouped logically
+
+**Staging rules:**
+- Stage specific files by name — never `git add -A` or `git add .`
+- Before staging, check for sensitive data (.env values, private keys, API keys) — warn and exclude if found
+- Do NOT stage anything under `autodolist-results/`
+
+Example:
 ```
-git add -A && git commit -m "<task_name>: post-merge fixes from impl review and pass criteria"
+git add path/to/file1.js path/to/file2.js
+git commit -m "fix: post-merge corrections for <task short name>
+
+- resolve conflict in provider initialization order
+- fix pass criterion regression from upstream change"
 ```
+
 (Skip the commit if there are no uncommitted changes — the merge commit alone is sufficient.)
 
 Proceed to Step 7.
@@ -218,14 +235,14 @@ Update `autodolist/task_list.md` based on the final outcome of this phase:
 
 ### If the merge failed (pass criteria broke, impl review blockers, unresolvable conflict, or push contention):
 
-1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after the numbered tasks but before `## Completed`).
+1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after `## Proposed Tasks` but before `## Completed`).
 2. Cut the entire task block — from its `## Task N: <short name>` heading through all its subsections (`### Task Description`, `### Pass Criteria`) — out of its current position.
 3. Append it to the bottom of the `## Failed` section.
 4. Under the moved task block, add a one-line note: `Failed at merge: <task_name> — <date> — <short reason>`.
 
 ### If the merge succeeded (pushed to $BASE_BRANCH):
 
-1. Find the `## Completed` section in `task_list.md` (create it if it does not exist — place it after `## Failed` but before `## Proposed Tasks`).
+1. Find the `## Completed` section in `task_list.md` (create it if it does not exist — place it after `## Failed`).
 2. Cut the entire task block out of its current position.
 3. Append it to the bottom of the `## Completed` section.
 4. Under the moved task block, add a one-line note: `Completed: <task_name> — <date> — pushed <commit-sha> to $BASE_BRANCH`.

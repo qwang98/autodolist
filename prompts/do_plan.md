@@ -95,13 +95,29 @@ You MUST iterate at least once. Do NOT skip the review.
 
 ### After the impl review loop exits:
 
-Commit all accumulated implementation and review-fix changes as the task's main commit:
+Commit all accumulated implementation and review-fix changes as the task's main commit. Follow these commit conventions for ALL commits in this phase:
 
+**Commit message format:**
+- Type prefix: `feat` / `fix` / `refactor` / `chore` / `docs` / `perf`
+- Short subject line (< 72 chars), imperative mood
+- Body listing key changes grouped logically
+
+**Staging rules:**
+- Stage specific files by name — never `git add -A` or `git add .`
+- Before staging, check for sensitive data (.env values, private keys, API keys) — warn and exclude if found
+- Do NOT stage anything under `autodolist-results/`
+
+Example:
 ```
-git add -A && git commit -m "<task_name>: implementation"
+git add path/to/file1.js path/to/file2.js
+git commit -m "feat: enable compoundV3 and euler borrow providers
+
+- add compoundV3 and euler to EXECUTABLE_PROTOCOLS set
+- fix flashLoan config validation for directional borrowing
+- add wsteth_rseth_test.csv for live dry-run"
 ```
 
-Do NOT stage anything under `autodolist-results/`. This commit is the logical boundary between "planned implementation" and "pass-criteria fixes."
+This commit is the logical boundary between "planned implementation" and "pass-criteria fixes."
 
 ## Step 3: Pass Criteria Loop
 
@@ -115,7 +131,14 @@ If every criterion passes on the current attempt → EXIT the loop with result =
 
 If any criterion fails:
 1. Consult `autodolist/debug_pass_criteria.md` for debugging methodology. Diagnose and fix the implementation.
-2. Commit the fix: `git add -A && git commit -m "<task_name>: pass criteria fix attempt <N>"`.
+2. Stage and commit the fix (specific files by name, same message conventions as above):
+   ```
+   git add path/to/fixed_file.js
+   git commit -m "fix: <short description of what broke>
+
+   - pass criteria attempt <N>
+   - <what was wrong and how it was fixed>"
+   ```
 3. Increment the attempt counter and re-run every pass criterion.
 
 **Max 3 fix attempts.** If pass criteria still fail after the 3rd fix attempt (i.e., 4 total runs: initial + 3 retries), EXIT the loop with result = **failure** and proceed to Step 4 on the failure path.
@@ -188,7 +211,7 @@ All commits stay on the branch. This tip is what the next task will build on.
 ### If the task failed:
 1. All commits are already on the branch (preserving the work in git history for future reference)
 2. Run `git revert <commit>` to undo the changes on the branch
-   - For multiple commits: `git revert --no-commit <oldest>^..<newest> && git commit -m "Revert <task_name>: task did not meet pass criteria within max retries"`
+   - For multiple commits: `git revert --no-commit <oldest>^..<newest> && git commit -m "revert: <task_name> did not meet pass criteria within max retries"`
 3. The branch tip is now back to the previous successful task (or the starting point) so the next iteration can re-attempt this task or move on per the task selection rules.
 
 ## Step 7: Create tag
@@ -226,7 +249,7 @@ Update `autodolist/task_list.md` based on the final outcome of this phase:
 
 ### If the task failed (pass criteria not met after max retries):
 
-1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after the numbered tasks but before `## Completed`).
+1. Find the `## Failed` section in `task_list.md` (create it if it does not exist — place it after `## Proposed Tasks` but before `## Completed`).
 2. Cut the entire task block — from its `## Task N: <short name>` heading through all its subsections (`### Task Description`, `### Pass Criteria`) — out of its current position.
 3. Append it to the bottom of the `## Failed` section.
 4. Under the moved task block, add a one-line note: `Failed: <task_name> — <date> — <short reason>`.
